@@ -1,0 +1,576 @@
+#include "CPU.hpp"
+
+void CPU::exec(u8 opcode) {
+    // immediate bytes
+    u8 D8 = mmu->read8(PC + 1);
+    s8 R8 = (s8)D8;
+    u16 D16 = mmu->read16(PC + 1);
+
+    // register pair values
+    u16 BC = getPair(B, C);
+    u16 DE = getPair(D, E);
+    u16 HL = getPair(H, L);
+    u16 CIO = 0xFF00 + C;
+    u16 LDH = 0xFF00 + A;
+
+    // memory values at given addresses
+    u8 atBC = mmu->read8(BC);    
+    u8 atDE = mmu->read8(DE);
+    u8 atHL = mmu->read8(HL);
+    u8 atD16 = mmu->read8(D16);
+    u8 atCIO = mmu->read8(CIO);
+    u8 atLDH = mmu->read8(LDH);
+
+    // flag states
+    bool flagZ = getFlag(FLAG_Z);
+    bool flagC = getFlag(FLAG_C);
+
+    switch (opcode) {
+
+        case 0x00: NOP(); break;
+        case 0x01: LDrr(B, C, D16); break;
+        case 0x02: LDaddr(BC, A); break;
+        case 0x03: INCrr(B, C); break;
+        case 0x04: INCr(B); break;
+        case 0x05: DECr(B); break;
+        case 0x06: LDr(B, D16); break;
+        case 0x07: RLa(true); break;
+        case 0x08: LDaddrsp(D16, SP); break;
+        case 0x09: ADDhl(BC); break;
+        case 0x0A: LDr(A, atBC); break;
+        case 0x0B: DECrr(B, C); break;
+        case 0x0C: INCr(C); break;
+        case 0x0D: DECr(C); break;
+        case 0x0E: LDr(C, D8); break;
+        case 0x0F: RRa(true); break;
+
+        case 0x10: STOP(); break;
+        case 0x11: LDrr(D, E, D8); break;
+        case 0x12: LDaddr(DE, A); break;
+        case 0x13: INCrr(D, E); break;
+        case 0x14: INCr(D); break;
+        case 0x15: DECr(D); break;
+        case 0x16: LDr(D, D8); break;
+        case 0x17: RLa(false); break;
+        case 0x18: JR(R8); break;
+        case 0x19: ADDhl(DE); break;
+        case 0x1A: LDr(A, atDE); break;
+        case 0x1B: DECrr(D, E); break;
+        case 0x1C: INCr(E); break;
+        case 0x1D: DECr(E); break;
+        case 0x1E: LDr(E, D8); break;
+        case 0x1F: RRa(false); break;
+
+        case 0x20: JRcond(R8, flagZ); break;
+        case 0x21: LDrr(H, L, D16); break;
+        case 0x22: LDIaddr(HL, A); break;
+        case 0x23: INCrr(H, L); break;
+        case 0x24: INCr(H); break;
+        case 0x25: DECr(H); break;
+        case 0x26: LDr(H, D8); break;
+        case 0x27: DAA(); break;
+        case 0x28: JRcond(R8, flagZ); break;
+        case 0x29: ADDhl(HL); break;
+        case 0x2A: LDIr(A, atHL); break;
+        case 0x2B: DECrr(H, L); break;
+        case 0x2C: INCr(L); break;
+        case 0x2D: DECr(L); break;
+        case 0x2E: LDr(L, D8); break;
+        case 0x2F: CPL(); break;
+
+        case 0x30: JRcond(R8, !flagC); break;
+        case 0x31: LDsp(D16); break;
+        case 0x32: LDDaddr(HL, A); break;
+        case 0x33: INCsp(); break;
+        case 0x34: INCrr(H, L); break;
+        case 0x35: DECrr(H, L); break;
+        case 0x36: LDaddr(HL, D8); break;
+        case 0x37: SCF(); break;
+        case 0x38: JRcond(R8, flagC); break;
+        case 0x39: ADDhl(SP); break;
+        case 0x3A: LDDr(A, atHL); break;
+        case 0x3B: DECsp(); break;
+        case 0x3C: INCr(A); break;
+        case 0x3D: DECr(A); break;
+        case 0x3E: LDr(A, D8); break;
+        case 0x3F: CCF(); break;
+
+        case 0x40: LDr(B, B); break;
+        case 0x41: LDr(B, C); break;
+        case 0x42: LDr(B, D); break;
+        case 0x43: LDr(B, E); break;
+        case 0x44: LDr(B, H); break;
+        case 0x45: LDr(B, L); break;
+        case 0x46: LDr(B, atHL); break;
+        case 0x47: LDr(B, A); break;
+        case 0x48: LDr(C, B); break;
+        case 0x49: LDr(C, C); break;
+        case 0x4A: LDr(C, D); break;
+        case 0x4B: LDr(C, E); break;
+        case 0x4C: LDr(C, H); break;
+        case 0x4D: LDr(C, L); break;
+        case 0x4E: LDr(C, atHL); break;
+        case 0x4F: LDr(C, A); break;
+
+        case 0x50: LDr(D, B); break;
+        case 0x51: LDr(D, C); break;
+        case 0x52: LDr(D, D); break;
+        case 0x53: LDr(D, E); break;
+        case 0x54: LDr(D, H); break;
+        case 0x55: LDr(D, L); break;
+        case 0x56: LDr(D, atHL); break;
+        case 0x57: LDr(D, A); break;
+        case 0x58: LDr(E, B); break;
+        case 0x59: LDr(E, C); break;
+        case 0x5A: LDr(E, D); break;
+        case 0x5B: LDr(E, E); break;
+        case 0x5C: LDr(E, H); break;
+        case 0x5D: LDr(E, L); break;
+        case 0x5E: LDr(E, atHL); break;
+        case 0x5F: LDr(E, A); break;
+
+        case 0x60: LDr(H, B); break;
+        case 0x61: LDr(H, C); break;
+        case 0x62: LDr(H, D); break;
+        case 0x63: LDr(H, E); break;
+        case 0x64: LDr(H, H); break;
+        case 0x65: LDr(H, L); break;
+        case 0x66: LDr(H, atHL); break;
+        case 0x67: LDr(H, A); break;
+        case 0x68: LDr(L, B); break;
+        case 0x69: LDr(L, C); break;
+        case 0x6A: LDr(L, D); break;
+        case 0x6B: LDr(L, E); break;
+        case 0x6C: LDr(L, H); break;
+        case 0x6D: LDr(L, L); break;
+        case 0x6E: LDr(L, atHL); break;
+        case 0x6F: LDr(L, A); break;
+
+        case 0x70: LDaddr(HL, B); break;
+        case 0x71: LDaddr(HL, C); break;
+        case 0x72: LDaddr(HL, D); break;
+        case 0x73: LDaddr(HL, E); break;
+        case 0x74: LDaddr(HL, H); break;
+        case 0x75: LDaddr(HL, L); break;
+        case 0x76: HALT(); break;
+        case 0x77: LDaddr(HL, A); break;
+        case 0x78: LDr(A, B); break;
+        case 0x79: LDr(A, C); break;
+        case 0x7A: LDr(A, D); break;
+        case 0x7B: LDr(A, E); break;
+        case 0x7C: LDr(A, H); break;
+        case 0x7D: LDr(A, L); break;
+        case 0x7E: LDr(A, atHL); break;
+        case 0x7F: LDr(A, A); break;
+
+        case 0x80: ADDa(B); break;
+        case 0x81: ADDa(C); break;
+        case 0x82: ADDa(D); break;
+        case 0x83: ADDa(E); break;
+        case 0x84: ADDa(H); break;
+        case 0x85: ADDa(L); break;
+        case 0x86: ADDa(atHL); break;
+        case 0x87: ADDa(A); break;
+        case 0x88: ADC(B); break;
+        case 0x89: ADC(C); break;
+        case 0x8A: ADC(D); break;
+        case 0x8B: ADC(E); break;
+        case 0x8C: ADC(H); break;
+        case 0x8D: ADC(L); break;
+        case 0x8E: ADC(atHL); break;
+        case 0x8F: ADC(A); break;
+
+        case 0x90: SUB(B); break;
+        case 0x91: SUB(C); break;
+        case 0x92: SUB(D); break;
+        case 0x93: SUB(E); break;
+        case 0x94: SUB(H); break;
+        case 0x95: SUB(L); break;
+        case 0x96: SUB(atHL); break;
+        case 0x97: SUB(A); break;
+        case 0x98: SBC(B); break;
+        case 0x99: SBC(C); break;
+        case 0x9A: SBC(D); break;
+        case 0x9B: SBC(E); break;
+        case 0x9C: SBC(H); break;
+        case 0x9D: SBC(L); break;
+        case 0x9E: SBC(atHL); break;
+        case 0x9F: SBC(A); break;
+
+        case 0xA0: AND(B); break;
+        case 0xA1: AND(C); break;
+        case 0xA2: AND(D); break; 
+        case 0xA3: AND(E); break;
+        case 0xA4: AND(H); break;
+        case 0xA5: AND(L); break;
+        case 0xA6: AND(atHL); break;
+        case 0xA7: AND(A); break;
+        case 0xA8: XOR(B); break;
+        case 0xA9: XOR(C); break;
+        case 0xAA: XOR(D); break;
+        case 0xAB: XOR(E); break;
+        case 0xAC: XOR(H); break;
+        case 0xAD: XOR(L); break;
+        case 0xAE: XOR(atHL); break;
+        case 0xAF: XOR(A); break;
+
+        case 0xB0: OR(B); break;
+        case 0xB1: OR(C); break;
+        case 0xB2: OR(D); break;
+        case 0xB3: OR(E); break;
+        case 0xB4: OR(H); break;
+        case 0xB5: OR(L); break;
+        case 0xB6: OR(atHL); break;
+        case 0xB7: OR(A); break;
+        case 0xB8: CP(B); break;
+        case 0xB9: CP(C); break;
+        case 0xBA: CP(D); break;
+        case 0xBB: CP(E); break;
+        case 0xBC: CP(H); break;
+        case 0xBD: CP(L); break;
+        case 0xBE: CP(atHL); break;
+        case 0xBF: CP(A); break;
+
+        case 0xC0: RETcond(!flagZ); break;
+        case 0xC1: POP(B, C); break;
+        case 0xC2: JPcond(D16, !flagZ); break;
+        case 0xC3: JP(D16); break;
+        case 0xC4: CALLcond(D16, !flagZ); break;
+        case 0xC5: PUSH(B, C); break;
+        case 0xC6: ADDa(D8); break;
+        case 0xC7: RST(0x00); break;
+        case 0xC8: RETcond(flagZ); break;
+        case 0xC9: RET(); break;
+        case 0xCA: JPcond(D16, flagZ); break;
+        case 0xCC: CALLcond(D16, flagZ); break;
+        case 0xCD: CALL(D16); break;
+        case 0xCE: ADC(D8); break;
+        case 0xCF: RST(0x08); break;
+        
+        case 0xD0: RETcond(!flagC); break;
+        case 0xD1: POP(D, E); break;
+        case 0xD2: JPcond(D16, !flagC); break;
+        case 0xD4: CALLcond(D16, !flagC); break; 
+        case 0xD5: PUSH(D, E); break;
+        case 0xD6: SUB(D8); break;
+        case 0xD7: RST(0x10); break;
+        case 0xD8: RETcond(flagC); break;
+        case 0xD9: RETI(); break;
+        case 0xDA: JPcond(D16, flagC); break;
+        case 0xDC: CALLcond(D16, flagC); break;
+        case 0xDE: SBC(D8); break;
+        case 0xDF: RST(0x18);
+
+        case 0xE0: LDaddr(LDH, A); break;
+        case 0xE1: POP(H, L); break;
+        case 0xE2: LDaddr(CIO, A); break;
+        case 0xE5: PUSH(H, L); break;
+        case 0xE6: AND(D8); break;
+        case 0xE7: RST(0x20); break;
+        case 0xE8: ADDsp(D8); break;
+        case 0xE9: JP(HL); break;
+        case 0xEA: LDaddr(D16, A); break;
+        case 0xEE: XOR(D8); break;
+        case 0xEF: RST(0x28); break;
+
+        case 0xF0: LDr(A, atLDH); break;
+        case 0xF1: POP(A, FLAGS); break;
+        case 0xF2: LDr(A, atCIO); break;
+        case 0xF3: DI();
+        case 0xF5: PUSH(A, FLAGS); break;
+        case 0xF6: OR(D8); break;
+        case 0xF7: RST(0x30); break;
+        case 0xF8: LDhl(SP + R8); break;
+        case 0xF9: LDsp(HL); break;
+        case 0xFA: LDr(A, atD16); break;
+        case 0xFB: EI(); break;
+        case 0xFE: CP(D8); break;
+        case 0xFF: RST(0x38); break;
+        
+        default: XXX(); break;
+
+    }
+}
+
+void CPU::execCB(u8 opcode) {
+    u16 HL = getPair(H, L);
+    u8 atHL = mmu->read8(HL);
+
+    switch (opcode) {
+
+        case 0x00: RLr(B, true); break;
+        case 0x01: RLr(C, true); break;
+        case 0x02: RLr(D, true); break;
+        case 0x03: RLr(E, true); break;
+        case 0x04: RLr(H, true); break;
+        case 0x05: RLr(L, true); break;
+        case 0x06: RLaddr(HL, true); break;
+        case 0x07: RLr(A, true); break;
+        case 0x08: RRr(B, true); break;
+        case 0x09: RRr(C, true); break;
+        case 0x0A: RRr(D, true); break;
+        case 0x0B: RRr(E, true); break;
+        case 0x0C: RRr(H, true); break;
+        case 0x0D: RRr(L, true); break;
+        case 0x0E: RRaddr(HL, true); break;
+        case 0x0F: RRr(A, true); break;
+
+        case 0x10: RLr(B, false); break;
+        case 0x11: RLr(C, false); break;
+        case 0x12: RLr(D, false); break;
+        case 0x13: RLr(E, false); break;
+        case 0x14: RLr(H, false); break;
+        case 0x15: RLr(L, false); break;
+        case 0x16: RLaddr(HL, false); break;
+        case 0x17: RLr(A, false); break;
+        case 0x18: RRr(B, false); break;
+        case 0x19: RRr(C, false); break;
+        case 0x1A: RRr(D, false); break;
+        case 0x1B: RRr(E, false); break;
+        case 0x1C: RRr(H, false); break;
+        case 0x1D: RRr(L, false); break;
+        case 0x1E: RRaddr(HL, false); break;
+        case 0x1F: RRr(A, false); break;
+
+        case 0x20: SLAr(B); break;
+        case 0x21: SLAr(C); break;
+        case 0x22: SLAr(D); break;
+        case 0x23: SLAr(E); break;
+        case 0x24: SLAr(H); break;
+        case 0x25: SLAr(L); break;
+        case 0x26: SLAaddr(HL); break;
+        case 0x27: SLAr(A); break;
+        case 0x28: SRAr(B); break;
+        case 0x29: SRAr(C); break;
+        case 0x2A: SRAr(D); break;
+        case 0x2B: SRAr(E); break;
+        case 0x2C: SRAr(H); break;
+        case 0x2D: SRAr(L); break;
+        case 0x2E: SRAaddr(HL); break;
+        case 0x2F: SRAr(A); break;
+
+        case 0x30: SWAPr(B); break;
+        case 0x31: SWAPr(C); break;
+        case 0x32: SWAPr(D); break;
+        case 0x33: SWAPr(E); break;
+        case 0x34: SWAPr(H); break;
+        case 0x35: SWAPr(L); break;
+        case 0x36: SWAPaddr(HL); break;
+        case 0x37: SWAPr(A); break;
+        case 0x38: SRLr(B); break;
+        case 0x39: SRLr(C); break;
+        case 0x3A: SRLr(D); break;
+        case 0x3B: SRLr(E); break;
+        case 0x3C: SRLr(H); break;
+        case 0x3D: SRLr(L); break;
+        case 0x3E: SRLaddr(HL); break;
+        case 0x3F: SRLr(A); break;
+
+        case 0x40: BIT(0, B); break;
+        case 0x41: BIT(0, C); break;
+        case 0x42: BIT(0, D); break;
+        case 0x43: BIT(0, E); break;
+        case 0x44: BIT(0, H); break;
+        case 0x45: BIT(0, L); break;
+        case 0x46: BIT(0, atHL); break;
+        case 0x47: BIT(0, A); break;
+        case 0x48: BIT(1, B); break;
+        case 0x49: BIT(1, C); break;
+        case 0x4A: BIT(1, D); break;
+        case 0x4B: BIT(1, E); break;
+        case 0x4C: BIT(1, H); break;
+        case 0x4D: BIT(1, L); break;
+        case 0x4E: BIT(1, atHL); break;
+        case 0x4F: BIT(1, A); break;
+
+        case 0x50: BIT(2, B); break;
+        case 0x51: BIT(2, C); break;
+        case 0x52: BIT(2, D); break;
+        case 0x53: BIT(2, E); break;
+        case 0x54: BIT(2, H); break;
+        case 0x55: BIT(2, L); break;
+        case 0x56: BIT(2, atHL); break;
+        case 0x57: BIT(2, A); break;
+        case 0x58: BIT(3, B); break;
+        case 0x59: BIT(3, C); break;
+        case 0x5A: BIT(3, D); break;
+        case 0x5B: BIT(3, E); break;
+        case 0x5C: BIT(3, H); break;
+        case 0x5D: BIT(3, L); break;
+        case 0x5E: BIT(3, atHL); break;
+        case 0x5F: BIT(3, A); break;
+
+        case 0x60: BIT(4, B); break;
+        case 0x61: BIT(4, C); break;
+        case 0x62: BIT(4, D); break;
+        case 0x63: BIT(4, E); break;
+        case 0x64: BIT(4, H); break;
+        case 0x65: BIT(4, L); break;
+        case 0x66: BIT(4, atHL); break;
+        case 0x67: BIT(4, A); break;
+        case 0x68: BIT(5, B); break;
+        case 0x69: BIT(5, C); break;
+        case 0x6A: BIT(5, D); break;
+        case 0x6B: BIT(5, E); break;
+        case 0x6C: BIT(5, H); break;
+        case 0x6D: BIT(5, L); break;
+        case 0x6E: BIT(5, atHL); break;
+        case 0x6F: BIT(5, A); break;
+
+        case 0x70: BIT(6, B); break;
+        case 0x71: BIT(6, C); break;
+        case 0x72: BIT(6, D); break;
+        case 0x73: BIT(6, E); break;
+        case 0x74: BIT(6, H); break;
+        case 0x75: BIT(6, L); break;
+        case 0x76: BIT(6, atHL); break;
+        case 0x77: BIT(6, A); break;
+        case 0x78: BIT(7, B); break;
+        case 0x79: BIT(7, C); break;
+        case 0x7A: BIT(7, D); break;
+        case 0x7B: BIT(7, E); break;
+        case 0x7C: BIT(7, H); break;
+        case 0x7D: BIT(7, L); break;
+        case 0x7E: BIT(7, atHL); break;
+        case 0x7F: BIT(7, A); break;
+        
+        case 0x80: RESr(0, B); break;
+        case 0x81: RESr(0, C); break;
+        case 0x82: RESr(0, D); break;
+        case 0x83: RESr(0, E); break;
+        case 0x84: RESr(0, H); break;
+        case 0x85: RESr(0, L); break;
+        case 0x86: RESaddr(0, HL); break;
+        case 0x87: RESr(0, A); break;
+        case 0x88: RESr(1, B); break;
+        case 0x89: RESr(1, C); break;
+        case 0x8A: RESr(1, D); break;
+        case 0x8B: RESr(1, E); break;
+        case 0x8C: RESr(1, H); break;
+        case 0x8D: RESr(1, L); break;
+        case 0x8E: RESaddr(1, HL); break;
+        case 0x8F: RESr(1, A); break;
+
+        case 0x90: RESr(2, B); break;
+        case 0x91: RESr(2, C); break;
+        case 0x92: RESr(2, D); break;
+        case 0x93: RESr(2, E); break;
+        case 0x94: RESr(2, H); break;
+        case 0x95: RESr(2, L); break;
+        case 0x96: RESaddr(2, HL); break;
+        case 0x97: RESr(2, A); break;
+        case 0x98: RESr(3, B); break;
+        case 0x99: RESr(3, C); break;
+        case 0x9A: RESr(3, D); break;
+        case 0x9B: RESr(3, E); break;
+        case 0x9C: RESr(3, H); break;
+        case 0x9D: RESr(3, L); break;
+        case 0x9E: RESaddr(3, HL); break;
+        case 0x9F: RESr(3, A); break;
+
+        case 0xA0: RESr(4, B); break;
+        case 0xA1: RESr(4, C); break;
+        case 0xA2: RESr(4, D); break;
+        case 0xA3: RESr(4, E); break;
+        case 0xA4: RESr(4, H); break;
+        case 0xA5: RESr(4, L); break;
+        case 0xA6: RESaddr(4, HL); break;
+        case 0xA7: RESr(4, A); break;
+        case 0xA8: RESr(5, B); break;
+        case 0xA9: RESr(5, C); break;
+        case 0xAA: RESr(5, D); break;
+        case 0xAB: RESr(5, E); break;
+        case 0xAC: RESr(5, H); break;
+        case 0xAD: RESr(5, L); break;
+        case 0xAE: RESaddr(5, HL); break;
+        case 0xAF: RESr(5, A); break;
+
+        case 0xB0: RESr(6, B); break;
+        case 0xB1: RESr(6, C); break;
+        case 0xB2: RESr(6, D); break;
+        case 0xB3: RESr(6, E); break;
+        case 0xB4: RESr(6, H); break;
+        case 0xB5: RESr(6, L); break;
+        case 0xB6: RESaddr(6, HL); break;
+        case 0xB7: RESr(6, A); break;
+        case 0xB8: RESr(7, B); break;
+        case 0xB9: RESr(7, C); break;
+        case 0xBA: RESr(7, D); break;
+        case 0xBB: RESr(7, E); break;
+        case 0xBC: RESr(7, H); break;
+        case 0xBD: RESr(7, L); break;
+        case 0xBE: RESaddr(7, HL); break;
+        case 0xBF: RESr(7, A); break;
+
+        case 0xC0: SETr(0, B); break;
+        case 0xC1: SETr(0, C); break;
+        case 0xC2: SETr(0, D); break;
+        case 0xC3: SETr(0, E); break;
+        case 0xC4: SETr(0, H); break;
+        case 0xC5: SETr(0, L); break;
+        case 0xC6: SETaddr(0, HL); break;
+        case 0xC7: SETr(0, A); break;
+        case 0xC8: SETr(1, B); break;
+        case 0xC9: SETr(1, C); break;
+        case 0xCA: SETr(1, D); break;
+        case 0xCB: SETr(1, E); break;
+        case 0xCC: SETr(1, H); break;
+        case 0xCD: SETr(1, L); break;
+        case 0xCE: SETaddr(1, HL); break;
+        case 0xCF: SETr(1, A); break;
+
+        case 0xD0: SETr(2, B); break;
+        case 0xD1: SETr(2, C); break;
+        case 0xD2: SETr(2, D); break;
+        case 0xD3: SETr(2, E); break;
+        case 0xD4: SETr(2, H); break;
+        case 0xD5: SETr(2, L); break;
+        case 0xD6: SETaddr(2, HL); break;
+        case 0xD7: SETr(2, A); break;
+        case 0xD8: SETr(3, B); break;
+        case 0xD9: SETr(3, C); break;
+        case 0xDA: SETr(3, D); break;
+        case 0xDB: SETr(3, E); break;
+        case 0xDC: SETr(3, H); break;
+        case 0xDD: SETr(3, L); break;
+        case 0xDE: SETaddr(3, HL); break;
+        case 0xDF: SETr(3, A); break;
+
+        case 0xE0: SETr(4, B); break;
+        case 0xE1: SETr(4, C); break;
+        case 0xE2: SETr(4, D); break;
+        case 0xE3: SETr(4, E); break;
+        case 0xE4: SETr(4, H); break;
+        case 0xE5: SETr(4, L); break;
+        case 0xE6: SETaddr(4, HL); break;
+        case 0xE7: SETr(4, A); break;
+        case 0xE8: SETr(5, B); break;
+        case 0xE9: SETr(5, C); break;
+        case 0xEA: SETr(5, D); break;
+        case 0xEB: SETr(5, E); break;
+        case 0xEC: SETr(5, H); break;
+        case 0xED: SETr(5, L); break;
+        case 0xEE: SETaddr(5, HL); break;
+        case 0xEF: SETr(5, A); break;
+
+        case 0xF0: SETr(6, B); break;
+        case 0xF1: SETr(6, C); break;
+        case 0xF2: SETr(6, D); break;
+        case 0xF3: SETr(6, E); break;
+        case 0xF4: SETr(6, H); break;
+        case 0xF5: SETr(6, L); break;
+        case 0xF6: SETaddr(6, HL); break;
+        case 0xF7: SETr(6, A); break;
+        case 0xF8: SETr(7, B); break;
+        case 0xF9: SETr(7, C); break;
+        case 0xFA: SETr(7, D); break;
+        case 0xFB: SETr(7, E); break;
+        case 0xFC: SETr(7, H); break;
+        case 0xFD: SETr(7, L); break;
+        case 0xFE: SETaddr(7, HL); break;
+        case 0xFF: SETr(7, A); break;
+
+        default: XXX(); break;
+
+    }
+}
