@@ -5,7 +5,7 @@ void CPU::LD(u8 &target, u8 val) {
     target = val;
 }
 
-void CPU::LDaddrsp(u16 addr, u16 val) {
+void CPU::LDaddrsp(u16 addr) {
     mmu->write16(addr, SP);
 }
 

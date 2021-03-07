@@ -42,7 +42,7 @@ class CPU {
 
     // loads and move instructions
     void LD(u8 &target, u8 val);
-    void LDaddrsp(u16 addr, u16 val);
+    void LDaddrsp(u16 addr);
     void LDhl(u16 val);
     void LDrr(u8 &hi, u8 &lo, u16 val);
     void LDsp(u16 val);
@@ -122,6 +122,7 @@ class CPU {
     void XXX();
 
     // tables for fetching PC offsets and cycle count based on the op performed
+    // (conditional jumps and calls may add extra cycles if a branch is taken)
     int getCycleCount(u8 op);
     int getPCOffset(u8 op);
 

@@ -35,7 +35,7 @@ void CPU::exec(u8 opcode) {
         case 0x05: DEC(B); break;
         case 0x06: LD(B, D8); break;
         case 0x07: RLa(true); break;
-        case 0x08: LDaddrsp(D16, SP); break;
+        case 0x08: LDaddrsp(D16); break;
         case 0x09: ADDhl(BC); break;
         case 0x0A: LD(A, atBC); break;
         case 0x0B: DECrr(B, C); break;
@@ -294,7 +294,7 @@ void CPU::exec(u8 opcode) {
 
 void CPU::execCB(u8 opcode) {
     u16 HL = getPair(H, L);
-    u8 atHL = mmu->read8(HL);
+    u8 &atHL = mmu->getRef(HL);
 
     switch (opcode) {
 
