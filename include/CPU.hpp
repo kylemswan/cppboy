@@ -41,18 +41,14 @@ class CPU {
     void execCB(u8 opcode);
 
     // loads and move instructions
-    void LDaddr(u16 addr, u8 val);
+    void LD(u8 &target, u8 val);
     void LDaddrsp(u16 addr, u16 val);
     void LDhl(u16 val);
-    void LDr(u8 &reg, u8 val);
     void LDrr(u8 &hi, u8 &lo, u16 val);
     void LDsp(u16 val);
 
-    void LDDaddr(u16 addr, u8 val);
-    void LDDr(u8 &reg, u8 val);
-
-    void LDIaddr(u16 addr, u8 val);
-    void LDIr(u8 &reg, u8 val);
+    void LDD(u8 &target, u8 val);
+    void LDI(u8 &target, u8 val);
     
     void PUSH(u8 hi, u8 lo);
     void POP(u8 &hi, u8 &lo);
@@ -73,13 +69,11 @@ class CPU {
     void ADDhl(u16 val);
     void ADDsp(s8 val);
 
-    void DECaddr(u16 addr);
-    void DECr(u8 &reg);
+    void DEC(u8 &target);
     void DECrr(u8 &hi, u8 &lo);
     void DECsp();
 
-    void INCaddr(u16 addr);
-    void INCr(u8 &reg);
+    void INC(u8 &target);
     void INCrr(u8 &hi, u8 &lo);
     void INCsp();
 
@@ -100,35 +94,21 @@ class CPU {
     void RETcond(bool cond);
     void RETI();
 
-    // bit shifting instructions
+    // bit rotating and shifting instructions
+    void RL(u8 &target, bool circular);
     void RLa(bool circular);
-    void RLaddr(u16 addr, bool circular);
-    void RLr(u8 &reg, bool circular);
-
+    void RR(u8 &target, bool circular);
     void RRa(bool circular);
-    void RRaddr(u16 addr, bool circular);
-    void RRr(u8 &reg, bool circular);
 
-    void SLAaddr(u16 addr);
-    void SLAr(u8 &reg);
-
-    void SRAaddr(u16 addr);
-    void SRAr(u8 &reg);
-
-    void SRLaddr(u16 addr);
-    void SRLr(u8 &reg);
+    void SLA(u8 &target);
+    void SRA(u8 &target);
+    void SRL(u8 &target);
 
     // bit setting and clearing
     void BIT(int bit, u8 val);
-
-    void RESaddr(int bit, u16 addr);
-    void RESr(int bit, u8 &reg);
-
-    void SETaddr(int bit, u16 addr);
-    void SETr(int bit, u8 &reg);
-
-    void SWAPaddr(u16 addr);
-    void SWAPr(u8 &reg);
+    void RES(int bit, u8 &target);
+    void SET(int bit, u8 &target);
+    void SWAP(u8 &target);
 
     // control instructions
     void DI();

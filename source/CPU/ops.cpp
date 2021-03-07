@@ -1,7 +1,8 @@
 #include "CPU.hpp"
 
-void CPU::LDaddr(u16 addr, u8 val) {
-    mmu->write8(addr, val);
+// loads and move instructions
+void CPU::LD(u8 &target, u8 val) {
+    target = val;
 }
 
 void CPU::LDaddrsp(u16 addr, u16 val) {
@@ -16,10 +17,6 @@ void CPU::LDhl(u16 val) {
     setFlag(FLAG_C, 0);
 }
 
-void CPU::LDr(u8 &reg, u8 val) {
-    reg = val;
-}
-
 void CPU::LDrr(u8 &hi, u8 &lo, u16 val) {
     setPair(hi, lo, val);
 }
@@ -28,23 +25,13 @@ void CPU::LDsp(u16 val) {
     SP = val;
 }
 
-void CPU::LDDaddr(u16 addr, u8 val) {
-    mmu->write8(addr, val);
+void CPU::LDD(u8 &target, u8 val) {
+    target = val;
     DECrr(H, L);
 }
 
-void CPU::LDDr(u8 &reg, u8 val) {
-    reg = val;
-    DECrr(H, L);
-}
-
-void CPU::LDIaddr(u16 addr, u8 val) {
-    mmu->write8(addr, val);
-    INCrr(H, L);
-}
-
-void CPU::LDIr(u8 &reg, u8 val) {
-    reg = val;
+void CPU::LDI(u8 &target, u8 val) {
+    target = val;
     INCrr(H, L);
 }
 
@@ -58,6 +45,7 @@ void CPU::POP(u8 &hi, u8 &lo) {
     SP += 2;
 }
 
+// logic instructions
 void CPU::AND(u8 val) {
     A &= val;
     setFlag(FLAG_Z, A == 0);
@@ -149,21 +137,12 @@ void CPU::ADDsp(s8 val) {
     SP = (u16)result;
 }
 
-void CPU::DECaddr(u16 addr) {
-    u8 val = mmu->read8(addr);
-    int result = val - 1;
+void CPU::DEC(u8 &target) {
+    int result = target - 1;
     setFlag(FLAG_Z, result == 0);
     setFlag(FLAG_N, 1);
-    setFlag(FLAG_H, (val & 0xF) < 1);
-    mmu->write8(addr, (u8)result);
-}
-
-void CPU::DECr(u8 &reg) {
-    int result = reg - 1;
-    setFlag(FLAG_Z, result == 0);
-    setFlag(FLAG_N, 1);
-    setFlag(FLAG_H, (reg & 0xF) < 1);
-    reg = (u8)result;
+    setFlag(FLAG_H, (target & 0xF) < 1);
+    target = (u8)result;
 }
 
 void CPU::DECrr(u8 &hi, u8 &lo) {
@@ -175,21 +154,12 @@ void CPU::DECsp() {
     SP -= 1;
 }
 
-void CPU::INCaddr(u16 addr) {
-    u8 val = mmu->read8(16);
-    int result = val + 1;
+void CPU::INC(u8 &target) {
+    int result = target + 1;
     setFlag(FLAG_Z, result & 0xFF);
     setFlag(FLAG_N, 0);
-    setFlag(FLAG_H, ((val & 0xF) + 1) & 0x10);
-    mmu->write8(addr, (u8)result);
-}
-
-void CPU::INCr(u8 &reg) {
-    int result = reg + 1;
-    setFlag(FLAG_Z, result & 0xFF);
-    setFlag(FLAG_N, 0);
-    setFlag(FLAG_H, ((reg & 0xF) + 1) & 0x10);
-    reg = (u8)result;
+    setFlag(FLAG_H, ((target & 0xF) + 1) & 0x10);
+    target = (u8)result;
 }
 
 void CPU::INCrr(u8 &hi, u8 &lo) {
@@ -273,7 +243,22 @@ void CPU::RETI() {
     EI();
 }
 
-// bit shifting instructions
+// bit rotating and shifting instructions
+void CPU::RL(u8 &target, bool circular) {
+    u8 B7 = target & 0x80;
+    u8 flagC = getFlag(FLAG_C);
+    A <<= 1;
+    if (circular) {
+        target |= B7 >> 7;
+    } else {
+        target |= flagC;
+    }
+    setFlag(FLAG_Z, target == 0);
+    setFlag(FLAG_N, 0);
+    setFlag(FLAG_H, 0);
+    setFlag(FLAG_C, B7);
+}
+
 void CPU::RLa(bool circular) {
     u8 B7 = A & 0x80;
     u8 flagC = getFlag(FLAG_C);
@@ -289,33 +274,16 @@ void CPU::RLa(bool circular) {
     setFlag(FLAG_C, B7);
 }
 
-void CPU::RLaddr(u16 addr, bool circular) {
-    u8 val = mmu->read8(addr);
-    u8 B7 = val & 0x80;
+void CPU::RR(u8 &target, bool circular) {
+    u8 B7 = target & 0x80;
     u8 flagC = getFlag(FLAG_C);
-    val <<= 1;
+    A >>= 1;
     if (circular) {
-        val |= B7 >> 7;
+        target |= B7 >> 7;
     } else {
-        val |= flagC;
+        target |= flagC;
     }
-    setFlag(FLAG_Z, val == 0);
-    setFlag(FLAG_N, 0);
-    setFlag(FLAG_H, 0);
-    setFlag(FLAG_C, B7);
-    mmu->write8(addr, val);
-}
-
-void CPU::RLr(u8 &reg, bool circular) {
-    u8 B7 = reg & 0x80;
-    u8 flagC = getFlag(FLAG_C);
-    A <<= 1;
-    if (circular) {
-        reg |= B7 >> 7;
-    } else {
-        reg |= flagC;
-    }
-    setFlag(FLAG_Z, reg == 0);
+    setFlag(FLAG_Z, target == 0);
     setFlag(FLAG_N, 0);
     setFlag(FLAG_H, 0);
     setFlag(FLAG_C, B7);
@@ -336,97 +304,30 @@ void CPU::RRa(bool circular) {
     setFlag(FLAG_C, B7);
 }
 
-void CPU::RRaddr(u16 addr, bool circular) {
-    u8 val = mmu->read8(addr);
-    u8 B7 = val & 0x80;
-    u8 flagC = getFlag(FLAG_C);
-    val >>= 1;
-    if (circular) {
-        val |= B7 >> 7;
-    } else {
-        val |= flagC;
-    }
-    setFlag(FLAG_Z, val == 0);
-    setFlag(FLAG_N, 0);
-    setFlag(FLAG_H, 0);
-    setFlag(FLAG_C, B7);
-    mmu->write8(addr, val);
-}
-
-void CPU::RRr(u8 &reg, bool circular) {
-    u8 B7 = reg & 0x80;
-    u8 flagC = getFlag(FLAG_C);
-    A >>= 1;
-    if (circular) {
-        reg |= B7 >> 7;
-    } else {
-        reg |= flagC;
-    }
-    setFlag(FLAG_Z, reg == 0);
+void CPU::SLA(u8 &target) {
+    u8 B7 = target >> 7;
+    target <<= 1;
+    setFlag(FLAG_Z, target == 0);
     setFlag(FLAG_N, 0);
     setFlag(FLAG_H, 0);
     setFlag(FLAG_C, B7);
 }
 
-void CPU::SLAaddr(u16 addr) {
-    u8 val = mmu->read8(addr);
-    u8 B7 = val >> 7;
-    val <<= 1;
-    mmu->write8(addr, val);
-    setFlag(FLAG_Z, val == 0);
-    setFlag(FLAG_N, 0);
-    setFlag(FLAG_H, 0);
-    setFlag(FLAG_C, B7);
-}
-
-void CPU::SLAr(u8 &reg) {
-    u8 B7 = reg >> 7;
-    reg <<= 1;
-    setFlag(FLAG_Z, reg == 0);
-    setFlag(FLAG_N, 0);
-    setFlag(FLAG_H, 0);
-    setFlag(FLAG_C, B7);
-}
-
-void CPU::SRAaddr(u16 addr) {
-    u8 val = mmu->read8(addr);
-    u8 B0 = val & 1;
-    u8 B7 = val & 0x80;
-    val >>= 1;
-    val |= B7;
-    mmu->write8(addr, val);
-    setFlag(FLAG_Z, val == 0);
+void CPU::SRA(u8 &target) {
+    u8 B0 = target & 1;
+    u8 B7 = target & 0x80;
+    target >>= 1;
+    target |= B7;
+    setFlag(FLAG_Z, target == 0);
     setFlag(FLAG_N, 0);
     setFlag(FLAG_H, 0);
     setFlag(FLAG_C, B0);
 }
 
-void CPU::SRAr(u8 &reg) {
-    u8 B0 = reg & 1;
-    u8 B7 = reg & 0x80;
-    reg >>= 1;
-    reg |= B7;
-    setFlag(FLAG_Z, reg == 0);
-    setFlag(FLAG_N, 0);
-    setFlag(FLAG_H, 0);
-    setFlag(FLAG_C, B0);
-}
-
-void CPU::SRLaddr(u16 addr) {
-    u8 val = mmu->read8(addr);
-    u8 B0 = val & 1;
-    val >>= 1;
-    mmu->write8(addr, val);
-    setFlag(FLAG_Z, val == 0);
-    setFlag(FLAG_N, 0);
-    setFlag(FLAG_H, 0);
-    setFlag(FLAG_C, B0);
-}
-
-void CPU::SRLr(u8 &reg) {
-    u8 B0 = reg & 1;
-    reg >>= 1;
-    setFlag(FLAG_Z, reg == 0);
+void CPU::SRL(u8 &target) {
+    u8 B0 = target & 1;
+    target >>= 1;
+    setFlag(FLAG_Z, target == 0);
     setFlag(FLAG_N, 0);
     setFlag(FLAG_H, 0);
     setFlag(FLAG_C, B0);
@@ -440,40 +341,18 @@ void CPU::BIT(int bit, u8 val) {
     setFlag(FLAG_H, 1);
 }
 
-void CPU::RESaddr(int bit, u16 addr) {
-    u8 val = mmu->read8(addr);
-    val &= ~(1 << bit);
-    mmu->write8(addr, val);
+void CPU::RES(int bit, u8 &target) {
+    target &= ~(1 << bit);
 }
 
-void CPU::RESr(int bit, u8 &reg) {
-    reg &= ~(1 << bit);
+void CPU::SET(int bit, u8 &target) {
+    target |= (1 << bit);
 }
 
-void CPU::SETaddr(int bit, u16 addr) {
-    u8 val = mmu->read8(addr);
-    val |= (1 << bit);
-    mmu->write8(addr, val);
-}
-
-void CPU::SETr(int bit, u8 &reg) {
-    reg |= (1 << bit);
-}
-
-void CPU::SWAPaddr(u16 addr) {
-    u8 temp = mmu->read8(addr);
-    u8 result = ((temp & 0xF0) >> 4) | ((temp & 0x0F) << 4);
-    mmu->write8(addr, result);
-    setFlag(FLAG_Z, result == 0);
-    setFlag(FLAG_N, 0);
-    setFlag(FLAG_H, 0);
-    setFlag(FLAG_C, 0);
-}
-
-void CPU::SWAPr(u8 &reg) {
-    u8 temp = reg;
-    reg = ((temp & 0xF0) >> 4) | ((temp & 0x0F) << 4);
-    setFlag(FLAG_Z, reg == 0);
+void CPU::SWAP(u8 &target) {
+    u8 temp = target;
+    target = ((temp & 0xF0) >> 4) | ((temp & 0x0F) << 4);
+    setFlag(FLAG_Z, target == 0);
     setFlag(FLAG_N, 0);
     setFlag(FLAG_H, 0);
     setFlag(FLAG_C, 0);
@@ -507,6 +386,7 @@ void CPU::STOP() {
     running = false;
 }
 
+// special op to catch all unimplemented or missed ops in development
 void CPU::XXX() {
 
 }

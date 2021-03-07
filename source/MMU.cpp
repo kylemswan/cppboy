@@ -16,3 +16,7 @@ u8 MMU::read8(u16 addr) {
 u16 MMU::read16(u16 addr) {
     return (memory[addr + 1] << 8) | memory[addr];
 }
+
+u8 &MMU::getRef(u16 addr) {
+    return memory[addr];
+}
