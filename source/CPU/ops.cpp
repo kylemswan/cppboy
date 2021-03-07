@@ -260,18 +260,9 @@ void CPU::RL(u8 &target, bool circular) {
 }
 
 void CPU::RLa(bool circular) {
-    u8 B7 = A & 0x80;
-    u8 flagC = getFlag(FLAG_C);
-    A <<= 1;
-    if (circular) {
-        A |= B7 >> 7;
-    } else {
-        A |= flagC;
-    }
+    // call the standard RL op on A but reset flag Z
+    RL(A, circular);
     setFlag(FLAG_Z, 0);
-    setFlag(FLAG_N, 0);
-    setFlag(FLAG_H, 0);
-    setFlag(FLAG_C, B7);
 }
 
 void CPU::RR(u8 &target, bool circular) {
@@ -290,18 +281,9 @@ void CPU::RR(u8 &target, bool circular) {
 }
 
 void CPU::RRa(bool circular) {
-    u8 B7 = A & 0x80;
-    u8 flagC = getFlag(FLAG_C);
-    A >>= 1;
-    if (circular) {
-        A |= B7 >> 7;
-    } else {
-        A |= flagC;
-    }
+    // call the standard RR op on register A but reset flag Z
+    RR(A, circular);
     setFlag(FLAG_Z, 0);
-    setFlag(FLAG_N, 0);
-    setFlag(FLAG_H, 0);
-    setFlag(FLAG_C, B7);
 }
 
 void CPU::SLA(u8 &target) {
