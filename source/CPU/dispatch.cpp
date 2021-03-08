@@ -6,7 +6,7 @@ void CPU::exec(u8 opcode) {
     s8 R8 = (s8)D8;
     u16 D16 = mmu->read16(PC + 1);
 
-    // register pair values
+    // register pair values and special memory addresses
     u16 BC = getPair(B, C);
     u16 DE = getPair(D, E);
     u16 HL = getPair(H, L);
@@ -20,10 +20,6 @@ void CPU::exec(u8 opcode) {
     u8 &atD16 = mmu->getRef(D16);
     u8 &atCIO = mmu->getRef(CIO);
     u8 &atLDH = mmu->getRef(LDH);
-
-    // flag states
-    bool flagZ = getFlag(FLAG_Z);
-    bool flagC = getFlag(FLAG_C);
 
     switch (opcode) {
 
@@ -163,14 +159,14 @@ void CPU::exec(u8 opcode) {
         case 0x7E: LD(A, atHL); break;
         case 0x7F: LD(A, A); break;
 
-        case 0x80: ADDa(B); break;
-        case 0x81: ADDa(C); break;
-        case 0x82: ADDa(D); break;
-        case 0x83: ADDa(E); break;
-        case 0x84: ADDa(H); break;
-        case 0x85: ADDa(L); break;
-        case 0x86: ADDa(atHL); break;
-        case 0x87: ADDa(A); break;
+        case 0x80: ADD(B); break;
+        case 0x81: ADD(C); break;
+        case 0x82: ADD(D); break;
+        case 0x83: ADD(E); break;
+        case 0x84: ADD(H); break;
+        case 0x85: ADD(L); break;
+        case 0x86: ADD(atHL); break;
+        case 0x87: ADD(A); break;
         case 0x88: ADC(B); break;
         case 0x89: ADC(C); break;
         case 0x8A: ADC(D); break;
@@ -237,7 +233,7 @@ void CPU::exec(u8 opcode) {
         case 0xC3: JP(D16); break;
         case 0xC4: CALLcond(D16, !flagZ); break;
         case 0xC5: PUSH(B, C); break;
-        case 0xC6: ADDa(D8); break;
+        case 0xC6: ADD(D8); break;
         case 0xC7: RST(0x00); break;
         case 0xC8: RETcond(flagZ); break;
         case 0xC9: RET(); break;
@@ -274,10 +270,10 @@ void CPU::exec(u8 opcode) {
         case 0xEF: RST(0x28); break;
 
         case 0xF0: LD(A, atLDH); break;
-        case 0xF1: POP(A, FLAGS); break;
+        case 0xF1: POPaf(); break;
         case 0xF2: LD(A, atCIO); break;
         case 0xF3: DI();
-        case 0xF5: PUSH(A, FLAGS); break;
+        case 0xF5: PUSHaf(); break;
         case 0xF6: OR(D8); break;
         case 0xF7: RST(0x30); break;
         case 0xF8: LDhl(SP + R8); break;

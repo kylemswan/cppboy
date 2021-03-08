@@ -11,10 +11,7 @@ void CPU::LDaddrsp(u16 addr) {
 
 void CPU::LDhl(u16 val) {
     setPair(H, L, val);
-    setFlag(FLAG_Z, 0);
-    setFlag(FLAG_N, 0);
-    setFlag(FLAG_H, 1);
-    setFlag(FLAG_C, 0);
+    setZNHC(false, false, true, false);
 }
 
 void CPU::LDrr(u8 &hi, u8 &lo, u16 val) {
@@ -40,38 +37,44 @@ void CPU::PUSH(u8 hi, u8 lo) {
     mmu->write16(SP, getPair(hi, lo));
 }
 
+void CPU::PUSHaf() {
+    // construct a u8 corresponding to the flag states then PUSH
+    u8 FLAGS = (flagZ << 7) | (flagN << 6) | (flagH << 5) | (flagC << 4);
+    PUSH(A, FLAGS);
+}
+
 void CPU::POP(u8 &hi, u8 &lo) {
     setPair(hi, lo, mmu->read16(SP));
+    SP += 2;
+}
+
+void CPU::POPaf() {
+    // set A to the hi byte and flag states corresponding to the lo byte
+    A = mmu->read8(SP + 1);
+    u8 FLAGS = mmu->read8(SP);
+    setZNHC(FLAGS >> 7, (FLAGS >> 6) & 1, (FLAGS >> 5) & 1, (FLAGS >> 4) & 1);
     SP += 2;
 }
 
 // logic instructions
 void CPU::AND(u8 val) {
     A &= val;
-    setFlag(FLAG_Z, A == 0);
-    setFlag(FLAG_N, 0);
-    setFlag(FLAG_H, 1);
-    setFlag(FLAG_C, 0);
+    setZNHC(!A, false, true, false);
 }
 
 void CPU::CCF() {
-    FLAGS ^= FLAG_C;
-    setFlag(FLAG_N, 0);
-    setFlag(FLAG_H, 0);
+    flagC = !flagC;
+    flagN = flagH = false;
 }
 
 void CPU::CP(u8 val) {
-    u8 result = A - val;
-    setFlag(FLAG_Z, result == 0);
-    setFlag(FLAG_N, 1);
-    setFlag(FLAG_H, (A & 0xF) < (val & 0xF));
-    setFlag(FLAG_C, A < val);
+    u8 res = A - val;
+    setZNHC(!res, true, (A & 0xF) < (val & 0xF), res > A);
 }
 
 void CPU::CPL() {
     A = ~A;
-    setFlag(FLAG_N, 1);
-    setFlag(FLAG_H, 1);
+    flagN = flagH = true;
 }
 
 void CPU::DAA() {
@@ -80,69 +83,60 @@ void CPU::DAA() {
 
 void CPU::OR(u8 val) {
     A |= val;
-    setFlag(FLAG_Z, A == 0);
-    setFlag(FLAG_N, 0);
-    setFlag(FLAG_H, 0);
-    setFlag(FLAG_C, 0);
+    setZNHC(!A, false, false, false);
 }
 
 void CPU::SCF() {
-    setFlag(FLAG_N, 0);
-    setFlag(FLAG_N, 0);
-    setFlag(FLAG_C, 1);
+    flagC = true;
+    flagN = flagH = false;
 }
 
 void CPU::XOR(u8 val) {
     A ^= val;
-    setFlag(FLAG_Z, A == 0);
-    setFlag(FLAG_N, 0);
-    setFlag(FLAG_H, 0);
-    setFlag(FLAG_C, 0);
+    setZNHC(!A, false, false, false);
 }
 
 // arithmetic instructions
 void CPU::ADC(u8 val) {
-    u8 flagC = getFlag(FLAG_C);
-    int result = A + val + flagC;
-    setFlag(FLAG_Z, result & 0xFF);
-    setFlag(FLAG_N, 0);
-    setFlag(FLAG_H, ((A + 0xF) + (val & 0xF) + (flagC + 0xF)) & 0x10);
-    setFlag(FLAG_C, result > 0xFF);
-    A = (u8)result;
+    u8 add = val + flagC;
+    u8 res = A + add;
+    setZNHC(!res, false, (A & 0xF) + (add & 0xF) > 0xF, res < A);
+    A = res;
 }
 
-void CPU::ADDa(u8 val) {
-    int result = A + val;
-    setFlag(FLAG_Z, result & 0xFF);
-    setFlag(FLAG_N, 0);
-    setFlag(FLAG_H, ((A & 0xF) + (val & 0xF)) & 0x10);
-    setFlag(FLAG_C, result > 0xFF);
-    A = (u8)result;
+void CPU::ADD(u8 val) {
+    u8 res = A + val;
+    setZNHC(!res, false, (A & 0xF) + (val & 0xF) > 0xF, res < A);
+    A = res;
 }
 
 void CPU::ADDhl(u16 val) {
-    int result = getPair(H, L) + val;
-    setFlag(FLAG_N, 0);
-    setFlag(FLAG_H, ((getPair(H, L) & 0x0FFF) + (val & 0x0FFF)) & 0x1000);
-    setFlag(FLAG_C, result > 0xFFFF);
-    setPair(H, L, (u16)result);
+    u16 HL = getPair(H, L);
+    u16 res = HL + val;
+    flagN = false;
+    flagH = (HL & 0x0FFF) + (val & 0x0FFF) > 0x0FFF;
+    flagC = res < HL;
+    setPair(H, L, res);
 }
 
 void CPU::ADDsp(s8 val) {
-    int result = SP + val;
-    setFlag(FLAG_Z, 0);
-    setFlag(FLAG_N, 0);
-    setFlag(FLAG_H, ((SP & 0xF) + (val & 0xF)) & 0x10);
-    setFlag(FLAG_C, ((SP & 0xFF) + (val & 0xFF)) & 0x0100);
-    SP = (u16)result;
+    u16 res;
+    if (val < 0) {
+        res = SP - (u8)val;
+        setZNHC(false, false, (SP & 0xF) < ((u8)val & 0xF), res > SP);
+    } else {
+        res = SP + (u8)val;
+        setZNHC(false, false, (SP & 0xF) + ((u8)val & 0xF) > 0xF, res < SP);
+    }
+    SP = res;
 }
 
 void CPU::DEC(u8 &target) {
-    int result = target - 1;
-    setFlag(FLAG_Z, result == 0);
-    setFlag(FLAG_N, 1);
-    setFlag(FLAG_H, (target & 0xF) < 1);
-    target = (u8)result;
+    u8 res = target - 1;
+    flagZ = !res;
+    flagN = true;
+    flagH = (target & 0xF) < 1;
+    target = res;
 }
 
 void CPU::DECrr(u8 &hi, u8 &lo) {
@@ -155,11 +149,11 @@ void CPU::DECsp() {
 }
 
 void CPU::INC(u8 &target) {
-    int result = target + 1;
-    setFlag(FLAG_Z, result & 0xFF);
-    setFlag(FLAG_N, 0);
-    setFlag(FLAG_H, ((target & 0xF) + 1) & 0x10);
-    target = (u8)result;
+    u8 res = target + 1;
+    flagZ = !res;
+    flagN = false;
+    flagH = (target & 0xF) + 1 > 0xF;
+    target = res;
 }
 
 void CPU::INCrr(u8 &hi, u8 &lo) {
@@ -172,22 +166,16 @@ void CPU::INCsp() {
 }
 
 void CPU::SBC(u8 val) {
-    u8 flagC = getFlag(FLAG_C);
-    int result = A - val - flagC;
-    setFlag(FLAG_Z, result & 0xFF);
-    setFlag(FLAG_N, 1);
-    setFlag(FLAG_H, (A & 0xF) - (val & 0xF) - (flagC & 0xF) < 0);
-    setFlag(FLAG_C, result < 0);
-    A = (u8)result;
+    u8 sub = val + flagC;
+    u8 res = A - sub;
+    setZNHC(!res, true, (A & 0xF) < (sub & 0xF), res > A);
+    A = res;
 }
 
 void CPU::SUB(u8 val) {
-    int result = A - val;
-    setFlag(FLAG_Z, result & 0xFF);
-    setFlag(FLAG_N, 1);
-    setFlag(FLAG_H, (A & 0xF) < (val & 0xF));
-    setFlag(FLAG_C, result < 0);
-    A = (u8)result;
+    u8 res = A - val;
+    setZNHC(!res, true, (A & 0xF) < (val & 0xF), res > A);
+    A = res;
 }
 
 // jump and return instructions
@@ -246,53 +234,42 @@ void CPU::RETI() {
 // bit rotating and shifting instructions
 void CPU::RL(u8 &target, bool circular) {
     u8 B7 = target & 0x80;
-    u8 flagC = getFlag(FLAG_C);
     A <<= 1;
     if (circular) {
         target |= B7 >> 7;
     } else {
         target |= flagC;
     }
-    setFlag(FLAG_Z, target == 0);
-    setFlag(FLAG_N, 0);
-    setFlag(FLAG_H, 0);
-    setFlag(FLAG_C, B7);
+    setZNHC(!target, false, false, B7);
 }
 
 void CPU::RLa(bool circular) {
     // call the standard RL op on A but reset flag Z
     RL(A, circular);
-    setFlag(FLAG_Z, 0);
+    flagZ = false;
 }
 
 void CPU::RR(u8 &target, bool circular) {
     u8 B7 = target & 0x80;
-    u8 flagC = getFlag(FLAG_C);
     A >>= 1;
     if (circular) {
         target |= B7 >> 7;
     } else {
         target |= flagC;
     }
-    setFlag(FLAG_Z, target == 0);
-    setFlag(FLAG_N, 0);
-    setFlag(FLAG_H, 0);
-    setFlag(FLAG_C, B7);
+    setZNHC(!target, false, false, B7);
 }
 
 void CPU::RRa(bool circular) {
     // call the standard RR op on register A but reset flag Z
     RR(A, circular);
-    setFlag(FLAG_Z, 0);
+    flagZ = false;
 }
 
 void CPU::SLA(u8 &target) {
     u8 B7 = target >> 7;
     target <<= 1;
-    setFlag(FLAG_Z, target == 0);
-    setFlag(FLAG_N, 0);
-    setFlag(FLAG_H, 0);
-    setFlag(FLAG_C, B7);
+    setZNHC(!target, false, false, B7);
 }
 
 void CPU::SRA(u8 &target) {
@@ -300,27 +277,21 @@ void CPU::SRA(u8 &target) {
     u8 B7 = target & 0x80;
     target >>= 1;
     target |= B7;
-    setFlag(FLAG_Z, target == 0);
-    setFlag(FLAG_N, 0);
-    setFlag(FLAG_H, 0);
-    setFlag(FLAG_C, B0);
+    setZNHC(!target, false, false, B0);
 }
 
 void CPU::SRL(u8 &target) {
     u8 B0 = target & 1;
     target >>= 1;
-    setFlag(FLAG_Z, target == 0);
-    setFlag(FLAG_N, 0);
-    setFlag(FLAG_H, 0);
-    setFlag(FLAG_C, B0);
+    setZNHC(!target, false, false, B0);
 }
 
 // bit setting and clearing
 void CPU::BIT(int bit, u8 val) {
     u8 result = (val >> bit) & 1;
-    setFlag(FLAG_Z, result == 0);
-    setFlag(FLAG_N, 0);
-    setFlag(FLAG_H, 1);
+    flagZ = !result;
+    flagN = false;
+    flagH = true;
 }
 
 void CPU::RES(int bit, u8 &target) {
@@ -334,10 +305,7 @@ void CPU::SET(int bit, u8 &target) {
 void CPU::SWAP(u8 &target) {
     u8 temp = target;
     target = ((temp & 0xF0) >> 4) | ((temp & 0x0F) << 4);
-    setFlag(FLAG_Z, target == 0);
-    setFlag(FLAG_N, 0);
-    setFlag(FLAG_H, 0);
-    setFlag(FLAG_C, 0);
+    setZNHC(!target, false, false, false);
 }
 
 // control instructions

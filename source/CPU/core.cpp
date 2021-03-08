@@ -1,7 +1,7 @@
 #include "CPU.hpp"
 
 void CPU::reset() {
-    // set registers and timers to their initial values here ...
+    flagZ = flagN = flagH = flagC = false;
     PC = 0x0100;
     SP = 0xFFFE;
     cycles = 0;
@@ -35,16 +35,11 @@ u16 CPU::getPair(u8 hi, u8 lo) {
     return (hi << 8) | lo;
 }
 
-void CPU::setFlag(Flag f, bool state) {
-    if (state) {
-        FLAGS |= f;
-    } else {
-        FLAGS &= ~f;
-    }
-}
-
-bool CPU::getFlag(Flag f) {
-    return FLAGS & f;
+void CPU::setZNHC(bool fZ, bool fN, bool fH, bool fC) {
+    flagZ = fZ;
+    flagN = fN;
+    flagH = fH;
+    flagC = fC;
 }
 
 int CPU::getPCOffset(u8 op) {

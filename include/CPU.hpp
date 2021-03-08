@@ -11,7 +11,7 @@ class CPU {
     void run();
 
     private:
-    u8 A, B, C, D, E, H, L, FLAGS;
+    u8 A, B, C, D, E, H, L;
     u16 SP, PC;
 
     MMU *mmu;
@@ -24,14 +24,8 @@ class CPU {
     u16 getPair(u8 hi, u8 lo);
 
     // flag logic
-    enum Flag {
-        FLAG_Z = 1 << 7,
-        FLAG_N = 1 << 6,
-        FLAG_H = 1 << 5, 
-        FLAG_C = 1 << 4
-    };
-    void setFlag(Flag f, bool state);
-    bool getFlag(Flag f);
+    bool flagZ, flagN, flagH, flagC;
+    void setZNHC(bool fZ, bool fN, bool fH, bool fC);
 
     // timing logic (unimplemented right now apart from just adding cycles...)
     int cycles;
@@ -51,7 +45,10 @@ class CPU {
     void LDI(u8 &target, u8 val);
     
     void PUSH(u8 hi, u8 lo);
+    void PUSHaf();
+
     void POP(u8 &hi, u8 &lo);
+    void POPaf();
 
     // logic instructions
     void AND(u8 val);
@@ -65,7 +62,7 @@ class CPU {
 
     // arithmetic instructions
     void ADC(u8 val);
-    void ADDa(u8 val);
+    void ADD(u8 val);
     void ADDhl(u16 val);
     void ADDsp(s8 val);
 
