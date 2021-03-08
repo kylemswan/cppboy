@@ -36,7 +36,17 @@ u16 CPU::getPair(u8 hi, u8 lo) {
 }
 
 void CPU::setZNHC(bool fZ, bool fN, bool fH, bool fC) {
+    setZNH(fZ, fN, fH);
+    flagC = fC;
+}
+
+void CPU::setZNH(bool fZ, bool fN, bool fH) {
     flagZ = fZ;
+    flagN = fN;
+    flagH = fH;
+}
+
+void CPU::setNHC(bool fN, bool fH, bool fC) {
     flagN = fN;
     flagH = fH;
     flagC = fC;

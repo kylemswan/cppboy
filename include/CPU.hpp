@@ -23,9 +23,11 @@ class CPU {
     void setPair(u8 &hi, u8 &lo, u16 val);
     u16 getPair(u8 hi, u8 lo);
 
-    // flag logic
+    // CPU flags and shortcuts to set multiple at once
     bool flagZ, flagN, flagH, flagC;
     void setZNHC(bool fZ, bool fN, bool fH, bool fC);
+    void setZNH(bool fZ, bool fN, bool fH);
+    void setNHC(bool fN, bool fH, bool fC);
 
     // timing logic (unimplemented right now apart from just adding cycles...)
     int cycles;

@@ -63,8 +63,7 @@ void CPU::AND(u8 val) {
 }
 
 void CPU::CCF() {
-    flagC = !flagC;
-    flagN = flagH = false;
+    setNHC(false, false, !flagC);
 }
 
 void CPU::CP(u8 val) {
@@ -87,8 +86,7 @@ void CPU::OR(u8 val) {
 }
 
 void CPU::SCF() {
-    flagC = true;
-    flagN = flagH = false;
+    setNHC(false, false, true);
 }
 
 void CPU::XOR(u8 val) {
@@ -113,9 +111,7 @@ void CPU::ADD(u8 val) {
 void CPU::ADDhl(u16 val) {
     u16 HL = getPair(H, L);
     u16 res = HL + val;
-    flagN = false;
-    flagH = (HL & 0x0FFF) + (val & 0x0FFF) > 0x0FFF;
-    flagC = res < HL;
+    setNHC(false, (HL & 0x0FFF) + (val & 0x0FFF) > 0x0FFF, res < HL);
     setPair(H, L, res);
 }
 
@@ -133,9 +129,7 @@ void CPU::ADDsp(s8 val) {
 
 void CPU::DEC(u8 &target) {
     u8 res = target - 1;
-    flagZ = !res;
-    flagN = true;
-    flagH = (target & 0xF) < 1;
+    setZNH(!res, true, (target & 0xF) < 1);
     target = res;
 }
 
@@ -150,9 +144,7 @@ void CPU::DECsp() {
 
 void CPU::INC(u8 &target) {
     u8 res = target + 1;
-    flagZ = !res;
-    flagN = false;
-    flagH = (target & 0xF) + 1 > 0xF;
+    setZNH(!res, false, (target & 0xF) + 1 > 0xF);
     target = res;
 }
 
@@ -289,9 +281,7 @@ void CPU::SRL(u8 &target) {
 // bit setting and clearing
 void CPU::BIT(int bit, u8 val) {
     u8 result = (val >> bit) & 1;
-    flagZ = !result;
-    flagN = false;
-    flagH = true;
+    setZNH(!result, false, true);
 }
 
 void CPU::RES(int bit, u8 &target) {
