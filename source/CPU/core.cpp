@@ -1,7 +1,7 @@
 #include "CPU.hpp"
 
 void CPU::reset() {
-    flagZ = flagN = flagH = flagC = false;
+    flagZ = flagN = flagH = flagC = true;
     PC = 0x0100;
     SP = 0xFFFE;
     cycles = 0;
@@ -26,13 +26,25 @@ void CPU::run() {
     cycles += getCycleCount(op);
 }
 
-void CPU::setPair(u8 &hi, u8 &lo, u16 val) {
-    hi = (val & 0xFF00) >> 8;
-    lo = val & 0x00FF;
-}
+std::string CPU::getState() {
+    // get the value of the next opcode
+    u8 currentOp = mmu->read8(PC);
+    u8 nextOp = mmu->read8(PC + getPCOffset(currentOp));
 
-u16 CPU::getPair(u8 hi, u8 lo) {
-    return (hi << 8) | lo;
+    // construct formatted string displaying CPU information
+    std::stringstream s;
+    s << "A  " << Utils::formatHex(A, 2) << "\n"
+      << "B  " << Utils::formatHex(B, 2) << "\n"
+      << "C  " << Utils::formatHex(C, 2) << "\n"
+      << "D  " << Utils::formatHex(D, 2) << "\n"
+      << "E  " << Utils::formatHex(E, 2) << "\n"
+      << "H  " << Utils::formatHex(H, 2) << "\n"
+      << "L  " << Utils::formatHex(L, 2) << "\n"
+      << "F  " << flagZ << flagN << flagH << flagC << "\n"
+      << "PC " << Utils::formatHex(PC, 4) << "\n"
+      << "SP " << Utils::formatHex(SP, 4) << "\n"
+      << "OP " << Utils::formatHex(nextOp, 2) << "\n";
+    return s.str();
 }
 
 void CPU::setZNHC(bool fZ, bool fN, bool fH, bool fC) {
@@ -62,6 +74,7 @@ int CPU::getPCOffset(u8 op) {
 
 int CPU::getCycleCount(u8 op) {
     if (op == 0xCB) {
+        // CB opcodes that end in '6' or 'E' take 16 cycles, all others take 8
         u8 cb = mmu->read8(PC + 1);
         u8 n2 = cb & 0x0F;
         return (n2 == 0x06) || (n2 == 0x0E) ? 16 : 8;

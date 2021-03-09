@@ -1,17 +1,29 @@
 #include "MMU.hpp"
 #include "CPU.hpp"
+#include "debug.hpp"
+
+#include <SFML/System.hpp>
 
 int main(int argc, char **argv) {
-    // screen and input to be initialised here ...
-
-    // initialise MMU and read in the cartridge
     MMU mmu;
 
-    // initialise the CPU and start running instructions!
     CPU cpu;
     cpu.reset();
     cpu.connectMMU(&mmu);
-    cpu.run();
+
+    DebugPanel d;
+    d.drawDebugInfo(cpu.getState());
+
+    while (!d.shouldClose()) {
+        // execute a CPU op when the spacebar is pressed and update debug text
+        if (d.spacebarPressed()) {
+            cpu.run();
+            d.drawDebugInfo(cpu.getState());
+
+            // delay thread for 100 milliseconds to prevent repeated input
+            d.pauseInput(100);
+        }
+    }
 
     return 0;
 }

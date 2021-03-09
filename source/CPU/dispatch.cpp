@@ -1,15 +1,15 @@
 #include "CPU.hpp"
 
-void CPU::exec(u8 opcode) {
+void CPU::exec(u8 op) {
     // immediate bytes
     u8 D8 = mmu->read8(PC + 1);
     s8 R8 = (s8)D8;
     u16 D16 = mmu->read16(PC + 1);
 
     // register pair values and special memory addresses
-    u16 BC = getPair(B, C);
-    u16 DE = getPair(D, E);
-    u16 HL = getPair(H, L);
+    u16 BC = Utils::getPair(B, C);
+    u16 DE = Utils::getPair(D, E);
+    u16 HL = Utils::getPair(H, L);
     u16 CIO = 0xFF00 + C;
     u16 LDH = 0xFF00 + A;
 
@@ -21,7 +21,7 @@ void CPU::exec(u8 opcode) {
     u8 &atCIO = mmu->getRef(CIO);
     u8 &atLDH = mmu->getRef(LDH);
 
-    switch (opcode) {
+    switch (op) {
 
         case 0x00: NOP(); break;
         case 0x01: LDrr(B, C, D16); break;
@@ -283,16 +283,16 @@ void CPU::exec(u8 opcode) {
         case 0xFE: CP(D8); break;
         case 0xFF: RST(0x38); break;
         
-        default: XXX(); break;
+        default: XXX(op); break;
 
     }
 }
 
-void CPU::execCB(u8 opcode) {
-    u16 HL = getPair(H, L);
+void CPU::execCB(u8 op) {
+    u16 HL = Utils::getPair(H, L);
     u8 &atHL = mmu->getRef(HL);
 
-    switch (opcode) {
+    switch (op) {
 
         case 0x00: RL(B, true); break;
         case 0x01: RL(C, true); break;
@@ -566,7 +566,7 @@ void CPU::execCB(u8 opcode) {
         case 0xFE: SET(7, atHL); break;
         case 0xFF: SET(7, A); break;
 
-        default: XXX(); break;
+        default: XXX(op); break;
 
     }
 }

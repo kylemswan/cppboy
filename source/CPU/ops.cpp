@@ -10,12 +10,12 @@ void CPU::LDaddrsp(u16 addr) {
 }
 
 void CPU::LDhl(u16 val) {
-    setPair(H, L, val);
+    Utils::setPair(H, L, val);
     setZNHC(false, false, true, false);
 }
 
 void CPU::LDrr(u8 &hi, u8 &lo, u16 val) {
-    setPair(hi, lo, val);
+    Utils::setPair(hi, lo, val);
 }
 
 void CPU::LDsp(u16 val) {
@@ -34,7 +34,7 @@ void CPU::LDI(u8 &target, u8 val) {
 
 void CPU::PUSH(u8 hi, u8 lo) {
     SP -= 2;
-    mmu->write16(SP, getPair(hi, lo));
+    mmu->write16(SP, Utils::getPair(hi, lo));
 }
 
 void CPU::PUSHaf() {
@@ -44,7 +44,7 @@ void CPU::PUSHaf() {
 }
 
 void CPU::POP(u8 &hi, u8 &lo) {
-    setPair(hi, lo, mmu->read16(SP));
+    Utils::setPair(hi, lo, mmu->read16(SP));
     SP += 2;
 }
 
@@ -109,10 +109,10 @@ void CPU::ADD(u8 val) {
 }
 
 void CPU::ADDhl(u16 val) {
-    u16 HL = getPair(H, L);
+    u16 HL = Utils::getPair(H, L);
     u16 res = HL + val;
     setNHC(false, (HL & 0x0FFF) + (val & 0x0FFF) > 0x0FFF, res < HL);
-    setPair(H, L, res);
+    Utils::setPair(H, L, res);
 }
 
 void CPU::ADDsp(s8 val) {
@@ -134,8 +134,8 @@ void CPU::DEC(u8 &target) {
 }
 
 void CPU::DECrr(u8 &hi, u8 &lo) {
-    u16 val = getPair(hi, lo);
-    setPair(hi, lo, val - 1);
+    u16 val = Utils::getPair(hi, lo);
+    Utils::setPair(hi, lo, val - 1);
 }
 
 void CPU::DECsp() {
@@ -149,8 +149,8 @@ void CPU::INC(u8 &target) {
 }
 
 void CPU::INCrr(u8 &hi, u8 &lo) {
-    u16 val = getPair(hi, lo);
-    setPair(hi, lo, val + 1);
+    u16 val = Utils::getPair(hi, lo);
+    Utils::setPair(hi, lo, val + 1);
 }
 
 void CPU::INCsp() {
@@ -172,7 +172,7 @@ void CPU::SUB(u8 val) {
 
 // jump and return instructions
 void CPU::CALL(u16 addr) {
-    PUSH((addr & 0xFF00) >> 8, addr & 0x00FF);
+    PUSH(Utils::getHi(PC), Utils::getLo(PC));
     JP(addr);
 }
 
@@ -208,7 +208,7 @@ void CPU::JRcond(s8 val, bool cond) {
 void CPU::RET() {
     u8 hi, lo;
     POP(hi, lo);
-    JP(getPair(hi, lo));
+    JP(Utils::getPair(hi, lo));
 }
 
 void CPU::RETcond(bool cond) {
@@ -317,7 +317,7 @@ void CPU::NOP() {
 }
 
 void CPU::RST(u16 addr) {
-    PUSH((PC & 0xFF00) >> 8, PC & 0x00FF);
+    PUSH(Utils::getHi(PC), Utils::getLo(PC));
     JP(addr);
 }
 
@@ -327,6 +327,6 @@ void CPU::STOP() {
 }
 
 // special op to catch all unimplemented or missed ops in development
-void CPU::XXX() {
-
+void CPU::XXX(u8 op) {
+    std::cout << "Unknown op: " << Utils::formatHex(op, 2) << "\n";
 }

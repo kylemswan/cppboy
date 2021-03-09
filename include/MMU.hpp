@@ -1,9 +1,3 @@
-/*
- * (incomplete) memory management unit for the emulator - evenutaually it will
- * contain much more logic pertaining to read only / write only sections of
- * memory as well as loading in cartridges, but it suffices for now
-*/
-
 #ifndef MMU_HPP
 #define MMU_HPP
 

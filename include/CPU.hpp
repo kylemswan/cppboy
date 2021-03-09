@@ -1,14 +1,22 @@
 #ifndef CPU_HPP
 #define CPU_HPP
 
-#include "types.hpp"
 #include "MMU.hpp"
+#include "types.hpp"
+#include "utils.hpp"
+
+#include <iostream>
+#include <string>
+#include <sstream>
 
 class CPU {
     public:
     void reset();
     void connectMMU(MMU *mmu);
     void run();
+
+    // return a formatted debug string 
+    std::string getState();
 
     private:
     u8 A, B, C, D, E, H, L;
@@ -18,10 +26,6 @@ class CPU {
 
     bool intsEnabled;
     bool running;
-
-    // utility functions for dealing with register pairs
-    void setPair(u8 &hi, u8 &lo, u16 val);
-    u16 getPair(u8 hi, u8 lo);
 
     // CPU flags and shortcuts to set multiple at once
     bool flagZ, flagN, flagH, flagC;
@@ -33,8 +37,8 @@ class CPU {
     int cycles;
 
     // dispatch functions
-    void exec(u8 opcode);
-    void execCB(u8 opcode);
+    void exec(u8 op);
+    void execCB(u8 op);
 
     // loads and move instructions
     void LD(u8 &target, u8 val);
@@ -118,7 +122,7 @@ class CPU {
     void STOP();
 
     // special function to catch unimplemented or missed opcodes
-    void XXX();
+    void XXX(u8 op);
 
     // tables for fetching PC offsets and cycle count based on the op performed
     // (conditional jumps and calls may add extra cycles if a branch is taken)
@@ -139,9 +143,9 @@ class CPU {
          1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
          1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
          1,  1,  3,  3,  3,  1,  2,  0,  1,  1,  3,  0,  3,  3,  2,  0,
-         1,  1,  3,  0,  3,  1,  2,  0,  1,  1,  3,  0,  3,  0,  2,  0,
-         2,  1,  2,  0,  0,  1,  2,  0,  2,  1,  3,  0,  0,  0,  2,  0,
-         2,  1,  2,  1,  0,  1,  2,  0,  2,  1,  3,  1,  0,  0,  2,  0
+         1,  1,  3,  1,  3,  1,  2,  0,  1,  1,  3,  1,  3,  1,  2,  0,
+         2,  1,  2,  1,  1,  1,  2,  0,  2,  1,  3,  1,  1,  1,  2,  0,
+         2,  1,  2,  1,  1,  1,  2,  0,  2,  1,  3,  1,  1,  1,  2,  0
     };
 
     int cycleCount[0x100] = {

@@ -1,32 +1,31 @@
-# CONFIGURATION
+# EXECUTABLE NAME
 EXE := cppboy
 
+# FILE DIRECTORIES
 SRCDIR := source
 INCDIR := include
 BLDDIR := build
 
+# TOOLCHAIN CONFIGURATION AND OPTIONS
 CXX := g++
 CXXFLAGS := -g -Wall -MMD -I$(INCDIR)
+LDLIBS := -lsfml-system -lsfml-window -lsfml-graphics
+VPATH := source : source/CPU
 
-SRCS := $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(SRCDIR)/CPU/*.cpp)
-OBJS := $(patsubst $(SRCDIR)/%.cpp, $(BLDDIR)/%.o, $(SRCS))
-DEPS := $(wildcard $(BLDDIR)/*.d)
+# DYNAMICALLY GENERATED INPUT FILES
+SRCS := $(notdir $(shell find source/ -name *.cpp))
+OBJS := $(patsubst %.cpp, $(BLDDIR)/%.o, $(SRCS))
+DEPS := $(wildcard build/*.d)
 
 # COMPILATION AND LINKING TARGETS
 $(EXE): $(OBJS)
 	$(CXX) $^ -o $@ $(LDLIBS)
 
-$(BLDDIR)/%.o: $(SRCDIR)/%.cpp | $(BLDDIR)
+$(BLDDIR)/%.o: %.cpp | $(BLDDIR)
 	$(CXX) -c $< -o $@ $(CXXFLAGS) 
-
-$(BLDDIR)/CPU/%.o: $(SRCDIR)/CPU/%.cpp | $(BLDDIR)/CPU
-	$(CXX) -c $< -o $@ $(CXXFLAGS)
 
 $(BLDDIR):
 	mkdir $(BLDDIR)
-
-$(BLDDIR)/CPU:
-	mkdir $(BLDDIR)/CPU
 
 include $(DEPS)
 
