@@ -1,4 +1,4 @@
-#include "CPU.hpp"
+#include "cpu.hpp"
 
 // loads and move instructions
 void CPU::LD(u8 &target, u8 val) {

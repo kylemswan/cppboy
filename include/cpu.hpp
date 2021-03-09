@@ -1,7 +1,7 @@
 #ifndef CPU_HPP
 #define CPU_HPP
 
-#include "MMU.hpp"
+#include "mmu.hpp"
 #include "types.hpp"
 #include "utils.hpp"
 
@@ -168,4 +168,4 @@ class CPU {
     };
 };
 
-#endif // "CPU.hpp" included
+#endif // "cpu.hpp" included

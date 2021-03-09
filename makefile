@@ -1,40 +1,39 @@
-# EXECUTABLE NAME
-EXE := cppboy
-
-# FILE DIRECTORIES
-SRCDIR := source
-INCDIR := include
-BLDDIR := build
-
-# TOOLCHAIN CONFIGURATION AND OPTIONS
+# compiler configuration
 CXX := g++
-CXXFLAGS := -g -Wall -MMD -I$(INCDIR)
-LDLIBS := -lsfml-system -lsfml-window -lsfml-graphics
-VPATH := source : source/CPU
+CXXFLAGS := -g -Wall -MMD -Iinclude/
 
-# DYNAMICALLY GENERATED INPUT FILES
-SRCS := $(notdir $(shell find source/ -name *.cpp))
-OBJS := $(patsubst %.cpp, $(BLDDIR)/%.o, $(SRCS))
+# link SFML libraries
+LDLIBS := -lsfml-system -lsfml-window -lsfml-graphics
+
+# names of all source directories
+DIRS := source source/cpu
+
+# find source files and generate the corresponding object and dependency names
+SRCS := $(foreach DIR, $(DIRS), $(notdir $(wildcard $(DIR)/*.cpp)))
+OBJS := $(patsubst %.cpp, build/%.o, $(SRCS))
 DEPS := $(wildcard build/*.d)
 
-# COMPILATION AND LINKING TARGETS
-$(EXE): $(OBJS)
+# set up VPATH so that files can be found in their respective (sub) directories
+VPATH := $(DIRS)
+
+# compilation and linking targets
+cppboy: $(OBJS)
 	$(CXX) $^ -o $@ $(LDLIBS)
 
-$(BLDDIR)/%.o: %.cpp | $(BLDDIR)
+build/%.o: %.cpp | build/
 	$(CXX) -c $< -o $@ $(CXXFLAGS) 
 
-$(BLDDIR):
-	mkdir $(BLDDIR)
+build/:
+	mkdir build/
 
 include $(DEPS)
 
-# UTILITY TARGETS
+# utility targets
 run:
-	./$(EXE)
+	./cppboy
 
 clean:
-	rm -rf $(BLDDIR)
+	rm -rf build/
 
 remove:
-	rm -f $(EXE)
+	rm -f cppboy

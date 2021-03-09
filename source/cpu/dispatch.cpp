@@ -1,4 +1,4 @@
-#include "CPU.hpp"
+#include "cpu.hpp"
 
 void CPU::exec(u8 op) {
     // immediate bytes

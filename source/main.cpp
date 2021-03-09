@@ -1,8 +1,6 @@
-#include "MMU.hpp"
-#include "CPU.hpp"
+#include "cpu.hpp"
+#include "mmu.hpp"
 #include "debug.hpp"
-
-#include <SFML/System.hpp>
 
 int main(int argc, char **argv) {
     MMU mmu;

@@ -1,4 +1,4 @@
-#include "CPU.hpp"
+#include "cpu.hpp"
 
 void CPU::reset() {
     flagZ = flagN = flagH = flagC = true;
@@ -33,7 +33,8 @@ std::string CPU::getState() {
 
     // construct formatted string displaying CPU information
     std::stringstream s;
-    s << "A  " << Utils::formatHex(A, 2) << "\n"
+    s << "OP " << Utils::formatHex(nextOp, 2) << "\n"
+      << "A  " << Utils::formatHex(A, 2) << "\n"
       << "B  " << Utils::formatHex(B, 2) << "\n"
       << "C  " << Utils::formatHex(C, 2) << "\n"
       << "D  " << Utils::formatHex(D, 2) << "\n"
@@ -42,8 +43,7 @@ std::string CPU::getState() {
       << "L  " << Utils::formatHex(L, 2) << "\n"
       << "F  " << flagZ << flagN << flagH << flagC << "\n"
       << "PC " << Utils::formatHex(PC, 4) << "\n"
-      << "SP " << Utils::formatHex(SP, 4) << "\n"
-      << "OP " << Utils::formatHex(nextOp, 2) << "\n";
+      << "SP " << Utils::formatHex(SP, 4) << "\n";
     return s.str();
 }
 

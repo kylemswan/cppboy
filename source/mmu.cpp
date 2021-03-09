@@ -1,4 +1,4 @@
-#include "MMU.hpp"
+#include "mmu.hpp"
 
 void MMU::write8(u16 addr, u8 data) {
     memory[addr] = data;
