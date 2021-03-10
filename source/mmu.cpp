@@ -20,3 +20,9 @@ u16 MMU::read16(u16 addr) {
 u8 &MMU::getRef(u16 addr) {
     return memory[addr];
 }
+
+void MMU::loadROM(std::string path) {
+    std::ifstream ROM(path, std::ios::binary);
+    ROM.read((char *)memory, 0x8000);
+    ROM.close();
+}

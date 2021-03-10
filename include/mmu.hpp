@@ -3,8 +3,13 @@
 
 #include "types.hpp"
 
+#include <string>
+#include <fstream>
+
 class MMU {
     public:
+    // attempt to write / read data into memory - this will eventually
+    // contain more logic pertaining to read / write only sections of RAM
     void write8(u16 addr, u8 data);
     void write16(u16 addr, u16 data);
 
@@ -14,8 +19,11 @@ class MMU {
     // return a reference to the given address - only allow for writable memory
     u8 &getRef(u16 addr);
 
+    // load a ROM into memory - does not support switchable ROM banks yet...
+    void loadROM(std::string path);
+
     private:
     u8 memory[0xFFFF];
 };
 
-#endif // "MMU.hpp" included
+#endif // "mmu.hpp" included

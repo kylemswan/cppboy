@@ -22,4 +22,4 @@ class DebugPanel {
     sf::Text text;
 };
 
-#endif // "debug.hpp" include
+#endif // "debug.hpp" included

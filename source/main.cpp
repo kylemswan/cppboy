@@ -3,7 +3,13 @@
 #include "debug.hpp"
 
 int main(int argc, char **argv) {
+    if (argc < 2) {
+        std::cerr << "Usage: ./cppboy <ROM>\n";
+        return -1;
+    }
+
     MMU mmu;
+    mmu.loadROM(argv[1]);
 
     CPU cpu;
     cpu.reset();
