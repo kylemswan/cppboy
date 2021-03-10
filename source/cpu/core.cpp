@@ -1,9 +1,17 @@
 #include "cpu.hpp"
 
 void CPU::reset() {
-    flagZ = flagN = flagH = flagC = true;
-    PC = 0x0100;
+    // state of the CPU after the internal boot sequence runs
+    A = 0x01;
+    B = 0x00;
+    C = 0x13;
+    D = 0x00;
+    E = 0xD8;
+    H = 0x01;
+    L = 0x4D;
     SP = 0xFFFE;
+    PC = 0x0100;
+    setZNHC(true, true, false, true);
     cycles = 0;
 }
 

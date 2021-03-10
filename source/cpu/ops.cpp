@@ -77,7 +77,26 @@ void CPU::CPL() {
 }
 
 void CPU::DAA() {
-
+    if (flagN) {
+        // adjust after subtraction
+        if (flagC || A > 0x99) {
+            A += 0x60;
+            flagC = true;
+        }
+        if (flagH || (A & 0xF) > 0x9) {
+            A += 0x6;
+        }
+    } else {
+        // adjust after addition
+        if (flagC) {
+            A += 0x60;
+        }
+        if (flagH) {
+            A -= 0x6;
+        }
+    }
+    flagZ = !A;
+    flagH = false;
 }
 
 void CPU::OR(u8 val) {

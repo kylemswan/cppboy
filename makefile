@@ -5,7 +5,7 @@ CXXFLAGS := -g -Wall -MMD -Iinclude/
 # link SFML libraries
 LDLIBS := -lsfml-system -lsfml-window -lsfml-graphics
 
-# names of all source directories
+# all directories containing source files
 DIRS := source source/cpu
 
 # find source files and generate the corresponding object and dependency names

@@ -41,7 +41,7 @@ void CPU::exec(u8 op) {
         case 0x0F: RRa(true); break;
 
         case 0x10: STOP(); break;
-        case 0x11: LDrr(D, E, D8); break;
+        case 0x11: LDrr(D, E, D16); break;
         case 0x12: LD(atDE, A); break;
         case 0x13: INCrr(D, E); break;
         case 0x14: INC(D); break;
