@@ -26,6 +26,7 @@ class CPU {
 
     bool intsEnabled;
     bool running;
+    bool branched;
 
     // CPU flags and shortcuts to set multiple at once
     bool flagZ, flagN, flagH, flagC;

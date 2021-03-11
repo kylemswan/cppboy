@@ -191,7 +191,9 @@ void CPU::SUB(u8 val) {
 
 // jump and return instructions
 void CPU::CALL(u16 addr) {
-    PUSH(Utils::getHi(PC), Utils::getLo(PC));
+    branched = true;
+    u16 next = mmu->read16(PC + 3);
+    PUSH(Utils::getHi(next), Utils::getLo(next));
     JP(addr);
 }
 
@@ -203,6 +205,7 @@ void CPU::CALLcond(u16 addr, bool cond) {
 }
 
 void CPU::JP(u16 addr) {
+    branched = true;
     PC = addr;
 }
 
@@ -214,6 +217,7 @@ void CPU::JPcond(u16 addr, bool cond) {
 }
 
 void CPU::JR(s8 val) {
+    branched = true;
     PC += val;
 }
 
@@ -225,6 +229,7 @@ void CPU::JRcond(s8 val, bool cond) {
 }
 
 void CPU::RET() {
+    branched = true;
     u8 hi, lo;
     POP(hi, lo);
     JP(Utils::getPair(hi, lo));
@@ -336,7 +341,9 @@ void CPU::NOP() {
 }
 
 void CPU::RST(u16 addr) {
-    PUSH(Utils::getHi(PC), Utils::getLo(PC));
+    branched = true;
+    u16 next = mmu->read16(PC + 1);
+    PUSH(Utils::getHi(next), Utils::getLo(next));
     JP(addr);
 }
 

@@ -2,6 +2,8 @@
 #include "mmu.hpp"
 #include "debug.hpp"
 
+#include <iostream>
+
 int main(int argc, char **argv) {
     if (argc < 2) {
         std::cerr << "Usage: ./cppboy <ROM>\n";

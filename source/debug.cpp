@@ -4,6 +4,7 @@ DebugPanel::DebugPanel() {
     win.create(sf::VideoMode(640, 320), "cppboy");
     font.loadFromFile("assets/bitfont.ttf");
     text.setFont(font);
+    text.setCharacterSize(20);
     text.setFillColor(sf::Color::White);
 }
 

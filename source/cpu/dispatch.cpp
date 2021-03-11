@@ -57,7 +57,7 @@ void CPU::exec(u8 op) {
         case 0x1E: LD(E, D8); break;
         case 0x1F: RRa(false); break;
 
-        case 0x20: JRcond(R8, flagZ); break;
+        case 0x20: JRcond(R8, !flagZ); break;
         case 0x21: LDrr(H, L, D16); break;
         case 0x22: LDI(atHL, A); break;
         case 0x23: INCrr(H, L); break;

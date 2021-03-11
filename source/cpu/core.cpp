@@ -11,7 +11,7 @@ void CPU::reset() {
     L = 0x4D;
     SP = 0xFFFE;
     PC = 0x0100;
-    setZNHC(true, true, false, true);
+    setZNHC(true, false, true, true);
     cycles = 0;
 }
 
@@ -21,7 +21,7 @@ void CPU::connectMMU(MMU *mmuIn) {
 
 void CPU::run() {
     u8 op = mmu->read8(PC);
-    PC += getPCOffset(op);
+
 
     // check for 0xCB prefixed opcodes
     if (op == 0xCB) {
@@ -31,17 +31,22 @@ void CPU::run() {
         exec(op);
     }
 
+    if (!branched) {
+        PC += getPCOffset(op);
+    }
+    branched = false;
+
     cycles += getCycleCount(op);
 }
 
 std::string CPU::getState() {
-    // get the value of the next opcode
-    u8 currentOp = mmu->read8(PC);
-    u8 nextOp = mmu->read8(PC + getPCOffset(currentOp));
+    u8 op = mmu->read8(PC);
+    u8 D8 = mmu->read8(PC + 1);
+    u16 D16 = mmu->read16(PC + 1);
 
     // construct formatted string displaying CPU information
     std::stringstream s;
-    s << "OP " << Utils::formatHex(nextOp, 2) << "\n"
+    s << "OP " << Utils::formatHex(op, 2) << "\n"
       << "A  " << Utils::formatHex(A, 2) << "\n"
       << "B  " << Utils::formatHex(B, 2) << "\n"
       << "C  " << Utils::formatHex(C, 2) << "\n"
@@ -51,7 +56,9 @@ std::string CPU::getState() {
       << "L  " << Utils::formatHex(L, 2) << "\n"
       << "F  " << flagZ << flagN << flagH << flagC << "\n"
       << "PC " << Utils::formatHex(PC, 4) << "\n"
-      << "SP " << Utils::formatHex(SP, 4) << "\n";
+      << "SP " << Utils::formatHex(SP, 4) << "\n\n"
+      << "D8   " << Utils::formatHex(D8, 2) << "\n"
+      << "D16  " << Utils::formatHex(D16, 4) << "\n";
     return s.str();
 }
 
