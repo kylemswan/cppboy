@@ -62,6 +62,10 @@ std::string CPU::getState() {
     return s.str();
 }
 
+int CPU::getCycles() {
+    return cycles;
+}
+
 void CPU::setZNHC(bool fZ, bool fN, bool fH, bool fC) {
     setZNH(fZ, fN, fH);
     flagC = fC;

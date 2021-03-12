@@ -249,12 +249,12 @@ void CPU::RETI() {
 
 // bit rotating and shifting instructions
 void CPU::RL(u8 &target, bool circular) {
-    u8 B7 = target & 0x80;
+    bool B7 = Utils::getBit(target, 7);
     A <<= 1;
     if (circular) {
-        target |= B7 >> 7;
+        Utils::setBit(target, 0, B7);
     } else {
-        target |= flagC;
+        Utils::setBit(target, 0, flagC);
     }
     setZNHC(!target, false, false, B7);
 }
@@ -266,12 +266,12 @@ void CPU::RLa(bool circular) {
 }
 
 void CPU::RR(u8 &target, bool circular) {
-    u8 B7 = target & 0x80;
+    bool B7 = Utils::getBit(target, 7);
     A >>= 1;
     if (circular) {
-        target |= B7 >> 7;
+        Utils::setBit(target, 7, B7);
     } else {
-        target |= flagC;
+        Utils::setBit(target, 7, flagC);
     }
     setZNHC(!target, false, false, B7);
 }
@@ -283,37 +283,37 @@ void CPU::RRa(bool circular) {
 }
 
 void CPU::SLA(u8 &target) {
-    u8 B7 = target >> 7;
+    u8 B7 = Utils::getBit(target, 7);
     target <<= 1;
     setZNHC(!target, false, false, B7);
 }
 
 void CPU::SRA(u8 &target) {
-    u8 B0 = target & 1;
-    u8 B7 = target & 0x80;
+    bool B0 = Utils::getBit(target, 0);
+    bool B7 = Utils::getBit(target, 7);
     target >>= 1;
-    target |= B7;
+    Utils::setBit(target, 7, B7);
     setZNHC(!target, false, false, B0);
 }
 
 void CPU::SRL(u8 &target) {
-    u8 B0 = target & 1;
+    bool B0 = Utils::getBit(target, 0);
     target >>= 1;
     setZNHC(!target, false, false, B0);
 }
 
 // bit setting and clearing
 void CPU::BIT(int bit, u8 val) {
-    u8 result = (val >> bit) & 1;
-    setZNH(!result, false, true);
+    bool state = Utils::getBit(val, bit);
+    setZNH(!state, false, true);
 }
 
 void CPU::RES(int bit, u8 &target) {
-    target &= ~(1 << bit);
+    Utils::setBit(target, bit, false);
 }
 
 void CPU::SET(int bit, u8 &target) {
-    target |= (1 << bit);
+    Utils::setBit(target, bit, true);
 }
 
 void CPU::SWAP(u8 &target) {

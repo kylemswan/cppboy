@@ -18,15 +18,17 @@ class CPU {
     // return a formatted debug string 
     std::string getState();
 
+    int getCycles();
+
     private:
     u8 A, B, C, D, E, H, L;
     u16 SP, PC;
 
     MMU *mmu;
 
-    bool intsEnabled;
-    bool running;
-    bool branched;
+    bool intsEnabled = true;
+    bool running = true;
+    bool branched = false;
 
     // CPU flags and shortcuts to set multiple at once
     bool flagZ, flagN, flagH, flagC;
